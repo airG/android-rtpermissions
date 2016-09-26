@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">M Runtime Permissions</string>
+    <string name="contacts_access">Contacts Access</string>
+    <string name="contacts_permission_rationale">I need to read your contacts so that I can send them to my server and get a pretty penny for all them phone numbers, yo!</string>
+    <string name="your_contacts">Yours!</string>
+    <string name="no_way">No way!</string>
+    <string name="no_soup">No soup for you</string>
+    <string name="contacts_permission_denied">Permission denied to read contacts. You\'re a jerk. All I wanted was to sell your contacts.</string>
+    <string name="checking_permission">Checking permission…</string>
+    <string name="requesting_permission">Requesting permission…</string>
+    <string name="permission_granted">Permission granted</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="change">Change</string>
+    <string name="dangerous_action">Dangerous Action</string>
+    <string name="phone">Phone</string>
+    <string name="dangerous_info">Dangerous Info</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="awaiting_permission">Awaiting permission…</string>
+    <string name="loading">Loading…</string>
+    <string name="failed">Failed!</string>
+    <string name="denied">Denied!</string>
+    <string name="rationale_dialog_title">You belong to me</string>
+    <string name="rationale_dialog_message">Every call you make, Every step you take, Every move you make I\'ll be watching you!</string>
+    <string name="creepy">Creepy!</string>
+    <string name="call_log_empty">No calls found</string>
+    <string name="contacts_will_appear">Once you grant the \'READ_CONTACT\' permission, your contacts will appear below.</string>
+</resources>

@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.airg.android.permission">
+
+    <uses-sdk tools:overrideLibrary="android.support.v13" />
+</manifest>
