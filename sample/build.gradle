@@ -1,16 +1,23 @@
 apply plugin: 'com.android.application'
-apply plugin: 'android-apt'
+
+apply from: "$rootDir/version.gradle"
+apply from: "$rootDir/dependencies.gradle"
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.2"
+    // do not modify. These fields are auto generated in dependencies.gradle
+    compileSdkVersion COMPILE_SDK_VERSION
+    buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
         applicationId "com.airg.android.permission.sample"
-        minSdkVersion 9
-        targetSdkVersion 24
-        versionCode 1
-        versionName "1.0"
+
+        // do not modify. These fields are auto generated in dependencies.gradle
+        minSdkVersion MIN_SDK_VERSION
+        targetSdkVersion COMPILE_SDK_VERSION
+
+        // do not modify. These fields are auto generated in version.gradle
+        versionCode VERSION_CODE
+        versionName VERSION_NAME
     }
 
     buildTypes {
@@ -29,5 +36,5 @@ dependencies {
     compile 'com.android.support:palette-v7:24.2.1'
     compile 'com.android.support:recyclerview-v7:24.2.1'
     compile 'com.jakewharton:butterknife:8.4.0'
-    apt 'com.jakewharton:butterknife-compiler:8.4.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
 }

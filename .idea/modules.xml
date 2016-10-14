@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/airg-android-permissions.iml" filepath="$PROJECT_DIR$/airg-android-permissions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/oss-permissions.iml" filepath="$PROJECT_DIR$/oss-permissions.iml" />
       <module fileurl="file://$PROJECT_DIR$/rtpermissions/rtpermissions.iml" filepath="$PROJECT_DIR$/rtpermissions/rtpermissions.iml" />
       <module fileurl="file://$PROJECT_DIR$/sample/sample.iml" filepath="$PROJECT_DIR$/sample/sample.iml" />
     </modules>

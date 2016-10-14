@@ -1,15 +1,53 @@
 apply plugin: 'com.android.library'
-apply plugin: 'android-apt'
+
+apply from: "$rootDir/version.gradle"
+apply from: "$rootDir/dependencies.gradle"
+
+logger.quiet("rtpermissions-$VERSION_NAME ($VERSION_CODE)")
+
+ext {
+    bintrayOrg = 'airgoss'
+    bintrayRepo = 'airGOss'
+    bintrayName = 'rtpermissions'
+
+    publishedGroupId = 'com.airg.android'
+    libraryName = 'Android Runtime Permissions'
+    artifact = 'rtpermissions'
+
+    libraryDescription = 'An easier way to deal with the Marshmallow runtime Permissions'
+
+    siteUrl = 'https://github.com/airG/android-rtpermissions'
+    gitUrl = 'https://github.com/airG/android-rtpermissions.git'
+
+    libraryVersion = VERSION_NAME
+
+    developerId = 'airgoss'
+    developerName = 'airG OpenSource'
+    developerEmail = 'opensource@airg.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.2"
+    // do not modify. These fields are auto generated in dependencies.gradle
+    compileSdkVersion COMPILE_SDK_VERSION
+    buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 24
-        versionCode 1
-        versionName "1.0"
+        // do not modify. These fields are auto generated in dependencies.gradle
+        minSdkVersion MIN_SDK_VERSION
+        targetSdkVersion COMPILE_SDK_VERSION
+
+        // do not modify. These fields are auto generated in version.gradle
+        versionCode VERSION_CODE
+        versionName VERSION_NAME
+
+        buildConfigField "String", "VCS_BRANCH", "\"$VCS_BRANCH\""
+        buildConfigField "String", "VCS_REVISION", "\"$VCS_REVISION\""
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -22,13 +60,18 @@ android {
 
 dependencies {
     provided 'org.projectlombok:lombok:1.16.10'
-    apt 'org.projectlombok:lombok:1.16.10'
+    annotationProcessor 'org.projectlombok:lombok:1.16.10'
+
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:support-annotations:24.2.1'
-    compile "com.android.support:support-v4:24.2.1"
-    compile "com.android.support:support-v13:24.2.1"
 
+    compile "com.android.support:support-annotations:$SUPPORT_LIB_VERSION"
+    compile "com.android.support:support-v4:$SUPPORT_LIB_VERSION"
+    compile "com.android.support:support-v13:$SUPPORT_LIB_VERSION"
+    //compile 'com.airg.android:device:0.05.00.0'
 }
+
+apply from: 'https://raw.githubusercontent.com/airG/JCenter/master/install.gradle'
+apply from: 'https://raw.githubusercontent.com/airG/JCenter/master/bintray.gradle'
