@@ -19,7 +19,6 @@
 package com.airg.android.permission;
 
 import android.app.Activity;
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -40,11 +39,6 @@ class ActivityPermissionsChecker implements PermissionsChecker {
         if (null == a)
             throw new NullPointerException("no activity");
         activity = a;
-    }
-
-    @Override
-    public Context getContext() {
-        return activity;
     }
 
     public boolean permissionGranted(@NonNull final String permission) {

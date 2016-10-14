@@ -25,6 +25,10 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 
+import com.airg.android.device.ApiLevel;
+import com.airg.android.logging.Logger;
+import com.airg.android.logging.TaggedLogger;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,7 +36,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 
-import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 
 /**
@@ -49,7 +52,9 @@ import static android.os.Build.VERSION_CODES.M;
 @SuppressWarnings({"WeakerAccess", "unused"})
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PermissionsHandler {
-    private static boolean ANDROID_M = SDK_INT >= M;
+    private static boolean ANDROID_M = ApiLevel.atLeast(M);
+
+    private static final TaggedLogger LOG = Logger.tag("PermissionsHandler");
 
     private final PermissionsChecker checker;
     private final PermissionHandlerClient client;
@@ -96,30 +101,46 @@ public final class PermissionsHandler {
             throw new IllegalArgumentException("No permissions");
 
         currentRequest = new PermissionRequest(requestCode, permissions);
+        LOG.d("Received request %d for %d permissions", requestCode, permissions.length);
 
         final Set<String> missing = getMissingPermissions(currentRequest.permissions);
 
         // all permissions  granted
         if (missing.size() == 0) {
+            LOG.d("All permissions for request %d already granted", requestCode);
             permissionGranted();
             return;
         }
 
+        LOG.d("Request %d needs to request %d permissions", requestCode, missing.size());
         final Set<String> showRationaleFor = checker.shouldShowRationaleDialog(missing);
 
-        if (showRationaleFor.isEmpty())
+        if (showRationaleFor.isEmpty()) {
+            LOG.d("Not showing a rationale dialog for %d permissions", showRationaleFor.size());
             checker.requestPermission(currentRequest.code, missing);
-        else
+        } else {
+            LOG.d("Need a rationale dialog for %d permissions", showRationaleFor.size());
             showPermissionRationaleDialog(showRationaleFor);
+        }
+    }
+
+    @Synchronized
+    public void abort(final int requestCode) {
+        LOG.d("Aborting request %d");
+        currentRequest = null;
     }
 
     private void permissionGranted() {
         client.onPermissionsGranted(currentRequest.code);
+        LOG.d("All permissions granted for request %d");
         currentRequest = null;
     }
 
     private void permissionDeclined(final Set<String> permissions) {
         client.onPermissionDeclined(currentRequest.code, permissions);
+        LOG.d("%d permissions declined for request %d: %s", permissions.size(),
+                currentRequest.code,
+                permissions);
         currentRequest = null;
     }
 
@@ -149,8 +170,9 @@ public final class PermissionsHandler {
         final Set<String> denied = new HashSet<>();
 
         for (int i = 0; i < permissions.length; i++) {
-            if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
+            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                 denied.add(permissions[i]);
+            }
         }
 
         if (denied.isEmpty()) {

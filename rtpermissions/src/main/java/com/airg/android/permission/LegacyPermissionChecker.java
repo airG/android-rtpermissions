@@ -18,22 +18,17 @@
 
 package com.airg.android.permission;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 
-import java.util.Set;
+import com.airg.android.device.ApiLevel;
 
-import static android.os.Build.VERSION.SDK_INT;
+import java.util.Set;
 
 /**
  * Default permission checker for old device before runtime permissions existed.
  */
 
 final class LegacyPermissionChecker implements PermissionsChecker {
-    @Override
-    public Context getContext() {
-        return null;
-    }
 
     @Override
     public boolean permissionGranted(@NonNull final String permission) {
@@ -52,6 +47,6 @@ final class LegacyPermissionChecker implements PermissionsChecker {
         // being used or this method was called on a pre-marshmallow device. Either way, it's bad.
         // mmkay?
         throw new IllegalStateException("requestPermission called for pre-Marshmallow API " +
-                SDK_INT);
+                ApiLevel.get());
     }
 }
