@@ -19,16 +19,19 @@
 package com.airg.android.permission;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+
+import java.util.Set;
 
 /**
  * Checks for permissions
  */
 interface PermissionsChecker {
-    Context getContext ();
+    Context getContext();
 
-    boolean permissionGranted (final String permission);
+    boolean permissionGranted(@NonNull final String permission);
 
-    boolean shouldShowRationaleDialog (final String... permissions);
+    Set<String> shouldShowRationaleDialog(@NonNull final Set<String> permissions);
 
-    void requestPermission (final int requestCode, final String... permissions);
+    void requestPermission(final int requestCode, @NonNull final Set<String> permissions);
 }

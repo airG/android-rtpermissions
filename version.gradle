@@ -1,7 +1,7 @@
 // Major version (0 until released then 1)
 def VERSION_MAJOR = 0;
 // Minor version
-def VERSION_MINOR = 5;
+def VERSION_MINOR = 6;
 // patch version
 def VERSION_PATCH = 0;
 
@@ -10,7 +10,7 @@ def gitShortHash = "git rev-parse --short HEAD".execute().text.trim()
 
 logger.info("Build time: %s", new Date().format('MMM dd yyyy K:mm:ss'))
 
-// why 0.00.00.0? because it sorts better (also symmetric)
+// why 0.00.00? because it sorts better
 ext {
     VERSION_CODE = VERSION_PATCH + (100 * VERSION_MINOR) + (1000 * VERSION_MAJOR)
     VERSION_NAME = sprintf("%d.%02d.%02d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)

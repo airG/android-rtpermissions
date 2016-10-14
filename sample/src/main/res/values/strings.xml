@@ -21,8 +21,11 @@
     <string name="failed">Failed!</string>
     <string name="denied">Denied!</string>
     <string name="rationale_dialog_title">You belong to me</string>
-    <string name="rationale_dialog_message">Every call you make, Every step you take, Every move you make I\'ll be watching you!</string>
+    <string name="call_log_rationale">Every call you take</string>
+    <string name="location_rationale">Every step you take</string>
+    <string name="ill_be_watching_you">I\'ll be watching you!</string>
     <string name="creepy">Creepy!</string>
-    <string name="call_log_empty">No calls found</string>
+    <string name="call_log_empty">Call log empty</string>
     <string name="contacts_will_appear">Once you grant the \'READ_CONTACT\' permission, your contacts will appear below.</string>
+    <string name="no_contacts_found">No Contacts Found</string>
 </resources>

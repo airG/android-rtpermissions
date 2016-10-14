@@ -20,28 +20,38 @@ package com.airg.android.permission;
 
 import android.annotation.TargetApi;
 import android.app.Fragment;
-import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v13.app.FragmentCompat;
 
+import java.util.Set;
+
+import static android.os.Build.VERSION_CODES.HONEYCOMB;
+
 /**
- For permission handling via fragments
+ * For permission handling via fragments
  */
-@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+@TargetApi(HONEYCOMB)
 final class FragmentPermissionsChecker
         extends ActivityPermissionsChecker
         implements PermissionsChecker {
     private final Fragment fragment;
 
-    FragmentPermissionsChecker (final Fragment f) {
-        super (f.getActivity ());
+    FragmentPermissionsChecker(final Fragment f) {
+        super(f.getActivity());
         fragment = f;
     }
 
-    protected boolean shouldShowRationaleDialog (final String permission) {
-        return FragmentCompat.shouldShowRequestPermissionRationale (fragment, permission);
+    protected boolean shouldShowRationaleDialog(final String permission) {
+        return FragmentCompat.shouldShowRequestPermissionRationale(fragment, permission);
     }
 
-    @Override public void requestPermission (final int requestCode, final String... permissions) {
-        FragmentCompat.requestPermissions (fragment, permissions, requestCode);
+    @Override
+    public void requestPermission(final int requestCode, @NonNull final Set<String> permissions) {
+        if (permissions.isEmpty())
+            throw new IllegalArgumentException("No permissions specified");
+
+        FragmentCompat.requestPermissions(fragment,
+                permissions.toArray(new String[permissions.size()]),
+                requestCode);
     }
 }

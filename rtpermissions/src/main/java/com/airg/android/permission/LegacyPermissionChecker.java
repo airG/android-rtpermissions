@@ -19,7 +19,11 @@
 package com.airg.android.permission;
 
 import android.content.Context;
-import android.os.Build;
+import android.support.annotation.NonNull;
+
+import java.util.Set;
+
+import static android.os.Build.VERSION.SDK_INT;
 
 /**
  * Default permission checker for old device before runtime permissions existed.
@@ -32,22 +36,22 @@ final class LegacyPermissionChecker implements PermissionsChecker {
     }
 
     @Override
-    public boolean permissionGranted(final String permission) {
+    public boolean permissionGranted(@NonNull final String permission) {
         // before Marshmallow, permissions are granted at install time
         return true;
     }
 
     @Override
-    public boolean shouldShowRationaleDialog(final String... permissions) {
-        // no permission rationale dialog for pre-marshmallow
-        return false;
+    public Set<String> shouldShowRationaleDialog(@NonNull Set<String> permissions) {
+        return null;
     }
 
     @Override
-    public void requestPermission(final int requestCode, final String... permissions) {
+    public void requestPermission(int requestCode, @NonNull Set<String> permissions) {
         // this should never be called on a pre-marshmallow device. Either the wrong checker is
         // being used or this method was called on a pre-marshmallow device. Either way, it's bad.
+        // mmkay?
         throw new IllegalStateException("requestPermission called for pre-Marshmallow API " +
-                Build.VERSION.SDK_INT);
+                SDK_INT);
     }
 }

@@ -19,7 +19,10 @@
 package com.airg.android.permission;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.support.annotation.NonNull;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -30,67 +33,55 @@ import java.util.Set;
 public interface PermissionHandlerClient {
     /**
      * All requested permissions are granted.
+     *
      * @param requestCode original request code
      */
-    void onPermissionsGranted (final int requestCode);
+    void onPermissionsGranted(final int requestCode);
 
     /**
      * At least one permission was not granted.
+     *
      * @param requestCode original request code
-     * @param denied the denied permissions
+     * @param denied      the denied permissions
      */
-    void onPermissionDeclined (final int requestCode, final Set<String> denied);
-
-    /**
-     * Get your handle to the open dialog. You'll want to dismiss this dialog if the activity is stopped.
-     * @param requestCode the original request code
-     * @param rationaleDialog reference to the currently displayed rationale dialog
-     */
-    void onPermissionRationaleDialogDisplayed (final int requestCode, final AlertDialog rationaleDialog);
+    void onPermissionDeclined(final int requestCode, final Set<String> denied);
 
     /**
      * Rationale dialog is dismissed. You no longer need to manage it.
+     *
      * @param requestCode original request code
      */
-    void onPermissionRationaleDialogDimissed (final int requestCode);
+    void onPermissionRationaleDialogDimissed(final int requestCode);
 
     /**
      * The user clicked the positive button on the rationale dialog
+     *
      * @param requestCode original request code
      */
-    void onPermissionRationaleDialogAccepted (final int requestCode);
+    void onPermissionRationaleDialogAccepted(final int requestCode);
 
     /**
      * The user clicked the negative button on the rationale dialog
+     *
      * @param requestCode original request code
+     * @param permissions permissions for which the rationale dialog was being displayed
      */
-    void onPermissionRationaleDialogDeclined (final int requestCode);
+    void onPermissionRationaleDialogDeclined(final int requestCode,
+                                             @NonNull Collection<String> permissions);
 
     /**
-     * Get a dialog title for the permission rationale dialog
-     * @param requestCode original request code
-     * @return dialog title
+     * Display a permission rationale dialog for the provided permissions. The generated
+     * dialog should have exactly a negative and a positive button. No more, no less.
+     *
+     * @param permissions Permissions that need clarification. This may be the set of all
+     *                    originally requested permissions or a subset thereof depending on which
+     *                    permissions were granted (or already granted).
+     * @param listener    Attach this listener to both {@link DialogInterface#BUTTON_POSITIVE} and
+     *                    {@link DialogInterface#BUTTON_NEGATIVE} buttons in the dialog
+     * @return The created {@link DialogInterface} instance
      */
-    CharSequence getPermissionRationaleDialogTitle (final int requestCode);
-
-    /**
-     * Gets the dialog text for the permission rationale dialog
-     * @param requestCode original request code
-     * @return the dialog text
-     */
-    CharSequence getPermissionRationaleDialogMessage (final int requestCode);
-
-    /**
-     * Get the text for the permission rationale dialog's positive button
-     * @param requestCode original request code
-     * @return the positive button label
-     */
-    CharSequence getPermissionRationaleDialogPositiveButton (final int requestCode);
-
-    /**
-     * Get the text for the permission rationale dialog's negative button
-     * @param requestCode original request code
-     * @return The negative button label
-     */
-    CharSequence getPermissionRationaleDialogNegativeButton (final int requestCode);
+    AlertDialog showPermissionRationaleDialog(final int requestCode,
+                                              @NonNull Collection<String> permissions,
+                                              @NonNull
+                                              final DialogInterface.OnClickListener listener);
 }

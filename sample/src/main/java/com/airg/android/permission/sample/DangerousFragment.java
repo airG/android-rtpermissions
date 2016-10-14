@@ -22,6 +22,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.location.Location;
 import android.location.LocationListener;
@@ -41,6 +42,7 @@ import android.widget.TextView;
 import com.airg.android.permission.PermissionHandlerClient;
 import com.airg.android.permission.PermissionsHandler;
 
+import java.util.Collection;
 import java.util.Set;
 
 import butterknife.BindView;
@@ -56,10 +58,9 @@ import static android.Manifest.permission.READ_CALL_LOG;
  */
 public class DangerousFragment
         extends Fragment
-        implements LoaderManager.LoaderCallbacks<Cursor>, LocationListener, PermissionHandlerClient {
-
-    private static final long MIN_LOCATION_UPDATE_TIME = 5000;
-    private static final float MIN_DISTANCE_DELTA = 400f;
+        implements LoaderManager.LoaderCallbacks<Cursor>,
+        LocationListener,
+        PermissionHandlerClient {
 
     private static final int REQUEST_PERMISSIONS = 101;
 
@@ -133,11 +134,6 @@ public class DangerousFragment
     }
 
     @Override
-    public void onPermissionRationaleDialogDisplayed(int requestCode, AlertDialog rationaleDialog) {
-        dialog = rationaleDialog;
-    }
-
-    @Override
     public void onPermissionRationaleDialogDimissed(int requestCode) {
         dialog = null;
     }
@@ -148,28 +144,40 @@ public class DangerousFragment
     }
 
     @Override
-    public void onPermissionRationaleDialogDeclined(int requestCode) {
-        // meh
+    public void onPermissionRationaleDialogDeclined(int requestCode,
+                                                    @NonNull Collection<String> permissions) {
+        if (permissions.contains(READ_CALL_LOG))
+            lastCallNumber.setText(R.string.denied);
+
+        if (permissions.contains(ACCESS_FINE_LOCATION)) {
+            longitude.setText(R.string.denied);
+            latitude.setText(R.string.denied);
+        }
     }
 
     @Override
-    public CharSequence getPermissionRationaleDialogTitle(int requestCode) {
-        return getString(R.string.rationale_dialog_title);
-    }
+    public AlertDialog showPermissionRationaleDialog(int requestCode,
+                                                     @NonNull Collection<String> permissions,
+                                                     @NonNull DialogInterface.OnClickListener listener) {
+        final Context context = getActivity();
 
-    @Override
-    public CharSequence getPermissionRationaleDialogMessage(int requestCode) {
-        return getString(R.string.rationale_dialog_message);
-    }
+        final DialogBody body = new DialogBody(context);
 
-    @Override
-    public CharSequence getPermissionRationaleDialogPositiveButton(int requestCode) {
-        return getString(android.R.string.ok);
-    }
+        body.callLogRationale.setVisibility(permissions.contains(READ_CALL_LOG)
+                ? View.VISIBLE
+                : View.GONE);
+        body.locationRationale.setVisibility(permissions.contains(ACCESS_FINE_LOCATION)
+                ? View.VISIBLE
+                : View.GONE);
 
-    @Override
-    public CharSequence getPermissionRationaleDialogNegativeButton(int requestCode) {
-        return getString(R.string.creepy);
+        dialog = new AlertDialog.Builder(context)
+                .setView(body.view)
+                .setTitle(R.string.rationale_dialog_title)
+                .setPositiveButton(android.R.string.ok, listener)
+                .setNegativeButton(R.string.creepy, listener)
+                .show();
+
+        return dialog;
     }
 
     @Override
@@ -195,9 +203,7 @@ public class DangerousFragment
         final Activity activity = getActivity();
         gps = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
         updateLocation(gps.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
-        gps.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                MIN_LOCATION_UPDATE_TIME,
-                MIN_DISTANCE_DELTA, this);
+        gps.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
     }
 
     private void onLocationPermissionDenied() {
@@ -279,5 +285,16 @@ public class DangerousFragment
     @Override
     public void onProviderDisabled(final String provider) {
         // meh
+    }
+
+    static final class DialogBody {
+        final View view;
+        @BindView (R.id.call_log_rationale) TextView callLogRationale;
+        @BindView (R.id.location_rationale) TextView locationRationale;
+
+        DialogBody (final Context context) {
+            view = View.inflate(context, R.layout.dialog_combined_rationale, null);
+            ButterKnife.bind (this, view);
+        }
     }
 }

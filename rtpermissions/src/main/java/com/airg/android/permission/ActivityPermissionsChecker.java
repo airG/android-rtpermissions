@@ -20,46 +20,59 @@ package com.airg.android.permission;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 /**
- For permission handling via activities
+ * For permission handling via activities
  */
 class ActivityPermissionsChecker implements PermissionsChecker {
     private final Activity activity;
 
     ActivityPermissionsChecker(final Activity a) {
         if (null == a)
-            throw new NullPointerException ("no activity");
+            throw new NullPointerException("no activity");
         activity = a;
     }
 
-    @Override public Context getContext () {
+    @Override
+    public Context getContext() {
         return activity;
     }
 
-    public boolean permissionGranted (final String permission) {
-        return ContextCompat.checkSelfPermission (activity, permission) == PackageManager.PERMISSION_GRANTED;
+    public boolean permissionGranted(@NonNull final String permission) {
+        return ContextCompat.checkSelfPermission(activity, permission) == PERMISSION_GRANTED;
     }
 
-    protected boolean shouldShowRationaleDialog (final String permission) {
-        return ActivityCompat.shouldShowRequestPermissionRationale (activity, permission);
+    @Override
+    public Set<String> shouldShowRationaleDialog(@NonNull Set<String> permissions) {
+        final Set<String> shouldShowRationaleDialog = new HashSet<>();
+
+        for (final String permission : permissions)
+            if (shouldShowRationaleDialog(permission))
+                shouldShowRationaleDialog.add(permission);
+
+        return Collections.unmodifiableSet(shouldShowRationaleDialog);
     }
 
-    @Override public final boolean shouldShowRationaleDialog (final String... permissions) {
-        for (final String perm : permissions)
-            if (shouldShowRationaleDialog (perm))
-                return true;
+    @Override
+    public void requestPermission(int requestCode, @NonNull Set<String> permissions) {
+        if (permissions.isEmpty())
+            throw new IllegalArgumentException("No permissions specified");
 
-        return false;
+        ActivityCompat.requestPermissions(activity,
+                permissions.toArray(new String[permissions.size()]),
+                requestCode);
     }
 
-    @Override public void requestPermission (final int requestCode, final String... permissions) {
-        if (null == permissions || permissions.length == 0)
-            throw new IllegalArgumentException ("No permissions specified");
-
-        ActivityCompat.requestPermissions (activity, permissions, requestCode);
+    protected boolean shouldShowRationaleDialog(final String permission) {
+        return ActivityCompat.shouldShowRequestPermissionRationale(activity, permission);
     }
 }

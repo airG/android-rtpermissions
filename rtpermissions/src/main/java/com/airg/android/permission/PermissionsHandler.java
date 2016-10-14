@@ -23,12 +23,9 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.support.annotation.NonNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import lombok.AccessLevel;
@@ -50,158 +47,160 @@ import static android.os.Build.VERSION_CODES.M;
  * to your <code>PermissionsHandler</code> instance.
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
-@RequiredArgsConstructor (access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PermissionsHandler {
     private static boolean ANDROID_M = SDK_INT >= M;
 
-    private final PermissionsChecker      checker;
+    private final PermissionsChecker checker;
     private final PermissionHandlerClient client;
 
     private PermissionRequest currentRequest = null;
 
-    public static PermissionsHandler with (final Activity activity,
-                                           final PermissionHandlerClient client) {
+    public static PermissionsHandler with(final Activity activity,
+                                          final PermissionHandlerClient client) {
         if (activity == client)
-            throw new IllegalArgumentException ("Activities that implement PermissionHandlerClient can cause the " +
+            throw new IllegalArgumentException("Activities that implement PermissionHandlerClient can cause the " +
                     "chain of permission acquisition to break");
 
         final PermissionsChecker checker = ANDROID_M
-                ? new ActivityPermissionsChecker (activity)
-                : new LegacyPermissionChecker ();
+                ? new ActivityPermissionsChecker(activity)
+                : new LegacyPermissionChecker();
 
-        return new PermissionsHandler (checker, client);
+        return new PermissionsHandler(checker, client);
     }
 
-    public static PermissionsHandler with (final Fragment fragment,
-                                           final PermissionHandlerClient client) {
+    public static PermissionsHandler with(final Fragment fragment,
+                                          final PermissionHandlerClient client) {
         final PermissionsChecker checker = ANDROID_M
-                ? new FragmentPermissionsChecker (fragment)
-                : new LegacyPermissionChecker ();
+                ? new FragmentPermissionsChecker(fragment)
+                : new LegacyPermissionChecker();
 
-        return new PermissionsHandler (checker, client);
+        return new PermissionsHandler(checker, client);
     }
 
-    public static PermissionsHandler with (final android.support.v4.app.Fragment fragment,
-                                           final PermissionHandlerClient client) {
+    public static PermissionsHandler with(final android.support.v4.app.Fragment fragment,
+                                          final PermissionHandlerClient client) {
         final PermissionsChecker checker = ANDROID_M
-                ? new CompatFragmentPermissionsChecker (fragment)
-                : new LegacyPermissionChecker ();
+                ? new CompatFragmentPermissionsChecker(fragment)
+                : new LegacyPermissionChecker();
 
-        return new PermissionsHandler (checker, client);
+        return new PermissionsHandler(checker, client);
     }
 
     @Synchronized
-    public void check (final int requestCode, final String... permissions) {
+    public void check(final int requestCode, final String... permissions) {
         if (null != currentRequest)
-            throw new IllegalStateException ("Another request is already in progress");
+            throw new IllegalStateException("Another request is already in progress");
 
         if (permissions == null || permissions.length == 0)
-            throw new IllegalArgumentException ("No permissions");
+            throw new IllegalArgumentException("No permissions");
 
-        currentRequest = new PermissionRequest (requestCode, permissions);
+        currentRequest = new PermissionRequest(requestCode, permissions);
 
-        final String[] missing = getMissingPermissions (currentRequest.permissions);
+        final Set<String> missing = getMissingPermissions(currentRequest.permissions);
 
         // all permissions  granted
-        if (missing.length == 0) {
-            permissionGranted ();
+        if (missing.size() == 0) {
+            permissionGranted();
             return;
         }
 
-        if (checker.shouldShowRationaleDialog (missing))
-            showPermissionRationaleDialog (missing);
+        final Set<String> showRationaleFor = checker.shouldShowRationaleDialog(missing);
+
+        if (showRationaleFor.isEmpty())
+            checker.requestPermission(currentRequest.code, missing);
         else
-            checker.requestPermission (currentRequest.code, missing);
+            showPermissionRationaleDialog(showRationaleFor);
     }
 
-    private void permissionGranted () {
-        client.onPermissionsGranted (currentRequest.code);
+    private void permissionGranted() {
+        client.onPermissionsGranted(currentRequest.code);
         currentRequest = null;
     }
 
-    private void permissionDeclined (final Set<String> permissions) {
-        client.onPermissionDeclined (currentRequest.code, permissions);
+    private void permissionDeclined(final Set<String> permissions) {
+        client.onPermissionDeclined(currentRequest.code, permissions);
         currentRequest = null;
     }
 
     @NonNull
-    private String[] getMissingPermissions (final String[] permissions) {
-        final List<String> missing = new ArrayList<>();
+    private Set<String> getMissingPermissions(final String[] permissions) {
+        final Set<String> missing = new HashSet<>();
 
         for (final String perm : permissions)
-            if (!checker.permissionGranted (perm))
-                missing.add (perm);
+            if (!checker.permissionGranted(perm))
+                missing.add(perm);
 
-        return missing.toArray (new String[missing.size ()]);
+        return missing;
     }
 
     @Synchronized
-    public void onRequestPermissionsResult (final int requestCode,
-                                            final String[] permissions,
-                                            final int[] grantResults) {
+    public void onRequestPermissionsResult(final int requestCode,
+                                           final String[] permissions,
+                                           final int[] grantResults) {
         if (null == currentRequest || currentRequest.code != requestCode)
             return;
 
         if (permissions.length != grantResults.length) {
             currentRequest = null;
-            throw new IllegalStateException ("grantResults size does not match that of permissions");
+            throw new IllegalStateException("grantResults size does not match that of permissions");
         }
 
         final Set<String> denied = new HashSet<>();
 
         for (int i = 0; i < permissions.length; i++) {
             if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
-                denied.add (permissions[i]);
+                denied.add(permissions[i]);
         }
 
-        if (denied.isEmpty ()) {
-            permissionGranted ();
+        if (denied.isEmpty()) {
+            permissionGranted();
             return;
         }
 
-        permissionDeclined (denied);
+        permissionDeclined(denied);
     }
 
-    private void showPermissionRationaleDialog (final String[] permissions) {
+    private void showPermissionRationaleDialog(final Set<String> permissions) {
         final int rc = currentRequest.code;
 
-        final DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener () {
-            @Override public void onClick (final DialogInterface dialog, final int which) {
+        final DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(final DialogInterface dialog, final int which) {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        client.onPermissionRationaleDialogAccepted (currentRequest.code);
-                        checker.requestPermission (currentRequest.code, permissions);
+                        client.onPermissionRationaleDialogAccepted(currentRequest.code);
+                        checker.requestPermission(currentRequest.code, permissions);
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:
-                        client.onPermissionRationaleDialogDeclined (currentRequest.code);
+                        client.onPermissionRationaleDialogDeclined(currentRequest.code, permissions);
                         currentRequest = null;
                         break;
                     default:
                         // nothing
                 }
 
-                client.onPermissionRationaleDialogDimissed (rc);
+                client.onPermissionRationaleDialogDimissed(rc);
             }
         };
 
-        final CharSequence positiveButton = client.getPermissionRationaleDialogPositiveButton (currentRequest.code);
-        final CharSequence negativeButton = client.getPermissionRationaleDialogNegativeButton (currentRequest.code);
+        final AlertDialog dialog = client.showPermissionRationaleDialog(currentRequest.code,
+                permissions,
+                listener);
 
-        final AlertDialog dialog = new AlertDialog.Builder (checker.getContext ())
-                .setTitle (client.getPermissionRationaleDialogTitle (currentRequest.code))
-                .setMessage (client.getPermissionRationaleDialogMessage (currentRequest.code))
-                .setPositiveButton (positiveButton, listener)
-                .setNegativeButton (negativeButton, listener)
-                .setCancelable (false)
-                .create ();
+        dialog.setCancelable(false);
 
-        dialog.show ();
-        client.onPermissionRationaleDialogDisplayed (currentRequest.code, dialog);
+        if (null == dialog.getButton(AlertDialog.BUTTON_POSITIVE))
+            throw new IllegalStateException("rationale dialog is missing the positive button");
+
+        if (null == dialog.getButton(AlertDialog.BUTTON_NEGATIVE))
+            throw new IllegalStateException("rationale dialog is missing the negative button");
     }
 
     @RequiredArgsConstructor
     private static class PermissionRequest {
-        private final                 int      code;
-        @NonNull private final String[] permissions;
+        private final int code;
+        @NonNull
+        private final String[] permissions;
     }
 }

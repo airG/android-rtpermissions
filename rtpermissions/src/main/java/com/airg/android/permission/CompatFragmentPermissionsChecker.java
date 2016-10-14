@@ -18,6 +18,10 @@
 
 package com.airg.android.permission;
 
+import android.support.annotation.NonNull;
+
+import java.util.Set;
+
 /**
  * For checking permissions from Compat fragments
  */
@@ -36,7 +40,11 @@ final class CompatFragmentPermissionsChecker
     }
 
     @Override
-    public void requestPermission(final int requestCode, final String... permissions) {
-        fragment.requestPermissions(permissions, requestCode);
+    public void requestPermission(final int requestCode, @NonNull Set<String> permissions) {
+        if (permissions.isEmpty())
+            throw new IllegalArgumentException("No permissions specified");
+
+        fragment.requestPermissions(permissions.toArray(new String[permissions.size()]),
+                requestCode);
     }
 }

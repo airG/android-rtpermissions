@@ -51,6 +51,7 @@ import com.airg.android.permission.PermissionHandlerClient;
 import com.airg.android.permission.PermissionsHandler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -60,7 +61,7 @@ import butterknife.ButterKnife;
 import static android.Manifest.permission.READ_CONTACTS;
 
 /**
- * Created by mahramf on 09/10/15.
+ * Created by Mahram Z. Foadi.
  */
 public class MainActivity
         extends AppCompatActivity
@@ -76,7 +77,8 @@ public class MainActivity
 
     private static final int REQUEST_SETTINGS = 1;
 
-    @BindView(android.R.id.list) RecyclerView list;
+    @BindView(android.R.id.list)
+    RecyclerView list;
 
     private final List<String> names = new ArrayList<>();
 
@@ -117,22 +119,21 @@ public class MainActivity
     }
 
 
-
-    private void gotoSettings () {
+    private void gotoSettings() {
         final Intent intent;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            intent = new Intent (Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts ("package", getPackageName (), null));
+            intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", getPackageName(), null));
         } else {
-            intent = new Intent (Intent.ACTION_VIEW);
-            intent.setClassName ("com.android.settings", "com.android.settings.InstalledAppDetails");
-            intent.putExtra (Build.VERSION.SDK_INT == Build.VERSION_CODES.FROYO
+            intent = new Intent(Intent.ACTION_VIEW);
+            intent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails");
+            intent.putExtra(Build.VERSION.SDK_INT == Build.VERSION_CODES.FROYO
                             ? "pkg"
                             : "com.android.settings.ApplicationPkgName"
-                    , getPackageName ());
+                    , getPackageName());
         }
 
-        startActivityForResult (intent, REQUEST_SETTINGS);
+        startActivityForResult(intent, REQUEST_SETTINGS);
     }
 
     @Override
@@ -207,18 +208,26 @@ public class MainActivity
 
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
-            final View item = inflater.inflate(R.layout.item_contact, parent, false);
-            return new Holder(item);
+            return viewType == R.layout.item_contact
+                    ? new ContactHolder(inflater.inflate(R.layout.item_contact, parent, false))
+                    : new HeaderHolder(inflater.inflate(R.layout.no_contacts_header, parent, false));
         }
 
         @Override
         public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-            ((Holder) holder).text.setText(names.get(position));
+            if (holder instanceof  ContactHolder){
+                ((ContactHolder) holder).text.setText(names.get(position));
+            }
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return names.isEmpty() ? R.layout.no_contacts_header : R.layout.item_contact;
         }
 
         @Override
         public int getItemCount() {
-            return names.size();
+            return Math.max(1, names.size());
         }
     }
 
@@ -305,13 +314,6 @@ public class MainActivity
         }
 
         @Override
-        public void onPermissionRationaleDialogDisplayed(int requestCode,
-                                                         AlertDialog rationaleDialog) {
-            dialog = rationaleDialog;
-
-        }
-
-        @Override
         public void onPermissionRationaleDialogDimissed(int requestCode) {
             dialog = null;
         }
@@ -322,39 +324,40 @@ public class MainActivity
         }
 
         @Override
-        public void onPermissionRationaleDialogDeclined(int requestCode) {
-
+        public void onPermissionRationaleDialogDeclined(int requestCode,
+                                                        @NonNull Collection<String> permissions) {
+            Toast.makeText(MainActivity.this, R.string.no_soup, Toast.LENGTH_SHORT).show();
         }
 
         @Override
-        public CharSequence getPermissionRationaleDialogTitle(int requestCode) {
-            return getString(R.string.contacts_access);
-        }
-
-        @Override
-        public CharSequence getPermissionRationaleDialogMessage(int requestCode) {
-            return getString(R.string.contacts_permission_rationale);
-        }
-
-        @Override
-        public CharSequence getPermissionRationaleDialogPositiveButton(int requestCode) {
-            return getString(R.string.your_contacts);
-        }
-
-        @Override
-        public CharSequence getPermissionRationaleDialogNegativeButton(int requestCode) {
-            return getString(R.string.no_way);
+        public AlertDialog showPermissionRationaleDialog(int requestCode,
+                                                         @NonNull Collection<String> permissions,
+                                                         @NonNull DialogInterface.OnClickListener listener) {
+            dialog = new AlertDialog.Builder(MainActivity.this)
+                    .setTitle(R.string.contacts_access)
+                    .setMessage(R.string.contacts_permission_rationale)
+                    .setPositiveButton(R.string.your_contacts, listener)
+                    .setNegativeButton(R.string.no_way, listener)
+                    .show();
+            return dialog;
         }
     }
 
-    static class Holder
+    static class ContactHolder
             extends RecyclerView.ViewHolder {
 
-        @BindView(android.R.id.title) TextView text;
+        @BindView(android.R.id.title)
+        TextView text;
 
-        Holder(final View itemView) {
+        ContactHolder(final View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+        }
+    }
+
+    static class HeaderHolder extends RecyclerView.ViewHolder {
+        HeaderHolder (final View itemView) {
+            super(itemView);
         }
     }
 }
