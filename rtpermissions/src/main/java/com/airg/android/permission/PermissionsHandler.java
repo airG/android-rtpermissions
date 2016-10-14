@@ -35,6 +35,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.M;
+
 /**
  * This class streamlines all the runtime permissions boilerplate and allows your Activity,
  * Fragment, or Compatibility Fragment to implement the Marshmallow runtime permissions by
@@ -43,13 +46,13 @@ import lombok.Synchronized;
  * Be sure to relay the results from the
  * {@link Activity#onRequestPermissionsResult(int, String[], int[])},
  * {@link Fragment#onRequestPermissionsResult(int, String[], int[])},
- * or {@link android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
+ * or <code>android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])</code>
  * to your <code>PermissionsHandler</code> instance.
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 @RequiredArgsConstructor (access = AccessLevel.PRIVATE)
 public final class PermissionsHandler {
-    private static boolean ANDROID_M = Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M;
+    private static boolean ANDROID_M = SDK_INT >= M;
 
     private final PermissionsChecker      checker;
     private final PermissionHandlerClient client;
@@ -199,6 +202,6 @@ public final class PermissionsHandler {
     @RequiredArgsConstructor
     private static class PermissionRequest {
         private final                 int      code;
-        @lombok.NonNull private final String[] permissions;
+        @NonNull private final String[] permissions;
     }
 }
