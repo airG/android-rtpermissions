@@ -132,7 +132,7 @@ public final class PermissionsHandler {
 
     private void permissionGranted() {
         client.onPermissionsGranted(currentRequest.code);
-        LOG.d("All permissions granted for request %d");
+        LOG.d("All permissions granted for request %d", currentRequest.code);
         currentRequest = null;
     }
 
