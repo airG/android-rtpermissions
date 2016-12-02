@@ -112,6 +112,7 @@ public final class PermissionsHandler {
             final Set<String> granted = new HashSet<>();
             Collections.addAll(granted, permissions);
             permissionsGranted(granted);
+            currentRequest = null;
             return;
         }
 
@@ -136,7 +137,6 @@ public final class PermissionsHandler {
     private void permissionsGranted(final Set<String> granted) {
         client.onPermissionsGranted(currentRequest.code, granted);
         LOG.d("All permissions granted for request %d", currentRequest.code);
-        currentRequest = null;
     }
 
     private void permissionsDeclined(final Set<String> permissions) {
@@ -144,7 +144,6 @@ public final class PermissionsHandler {
         LOG.d("%d permissions declined for request %d: %s", permissions.size(),
                 currentRequest.code,
                 permissions);
-        currentRequest = null;
     }
 
     @NonNull
@@ -180,12 +179,17 @@ public final class PermissionsHandler {
                 denied.add(permissions[i]);
         }
 
-        if (!granted.isEmpty()) {
-            permissionsGranted(granted);
-        }
+        try {
+            if (!granted.isEmpty()) {
+                permissionsGranted(granted);
+            }
 
-        if (!denied.isEmpty()) {
-            permissionsDeclined(denied);
+
+            if (!denied.isEmpty()) {
+                permissionsDeclined(denied);
+            }
+        } finally {
+            currentRequest = null;
         }
     }
 
