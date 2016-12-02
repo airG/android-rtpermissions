@@ -29,8 +29,6 @@ import com.airg.android.device.ApiLevel;
 import com.airg.android.logging.Logger;
 import com.airg.android.logging.TaggedLogger;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import lombok.AccessLevel;
@@ -69,8 +67,8 @@ public final class PermissionsHandler {
                     "chain of permission acquisition to break");
 
         final PermissionsChecker checker = ANDROID_M
-                ? new ActivityPermissionsChecker(activity)
-                : new LegacyPermissionChecker();
+                                           ? new ActivityPermissionsChecker(activity)
+                                           : new LegacyPermissionChecker();
 
         return new PermissionsHandler(checker, client);
     }
@@ -78,8 +76,8 @@ public final class PermissionsHandler {
     public static PermissionsHandler with(final Fragment fragment,
                                           final PermissionHandlerClient client) {
         final PermissionsChecker checker = ANDROID_M
-                ? new FragmentPermissionsChecker(fragment)
-                : new LegacyPermissionChecker();
+                                           ? new FragmentPermissionsChecker(fragment)
+                                           : new LegacyPermissionChecker();
 
         return new PermissionsHandler(checker, client);
     }
@@ -87,8 +85,8 @@ public final class PermissionsHandler {
     public static PermissionsHandler with(final android.support.v4.app.Fragment fragment,
                                           final PermissionHandlerClient client) {
         final PermissionsChecker checker = ANDROID_M
-                ? new CompatFragmentPermissionsChecker(fragment)
-                : new LegacyPermissionChecker();
+                                           ? new CompatFragmentPermissionsChecker(fragment)
+                                           : new LegacyPermissionChecker();
 
         return new PermissionsHandler(checker, client);
     }
@@ -101,20 +99,20 @@ public final class PermissionsHandler {
         if (permissions == null || permissions.length == 0)
             throw new IllegalArgumentException("No permissions");
 
-        currentRequest = new PermissionRequest(requestCode, permissions);
+        currentRequest = createRequest(requestCode, permissions);
         LOG.d("Received request %d for %d permissions", requestCode, permissions.length);
 
-        final Set<String> missing = getMissingPermissions(currentRequest.permissions);
-
-        // all permissions  granted
-        if (missing.size() == 0) {
-            LOG.d("All permissions for request %d already granted", requestCode);
-            final Set<String> granted = new HashSet<>();
-            Collections.addAll(granted, permissions);
+        if (currentRequest.isSatisfied()) {
+            final Set<String> granted = currentRequest.granted();
             permissionsGranted(granted);
             currentRequest = null;
             return;
         }
+
+        if (currentRequest.hasGrants())
+            permissionsGranted(currentRequest.granted());
+
+        final Set<String> missing = currentRequest.pending();
 
         LOG.d("Request %d needs to request %d permissions", requestCode, missing.size());
         final Set<String> showRationaleFor = checker.shouldShowRationaleDialog(missing);
@@ -128,6 +126,17 @@ public final class PermissionsHandler {
         }
     }
 
+    private PermissionRequest createRequest(final int requestCode, @NonNull final String[] permissions) {
+        final PermissionRequest request = new PermissionRequest(requestCode, permissions);
+
+        for (final String perm : permissions) {
+            if (checker.permissionIsGranted(perm))
+                request.granted(perm);
+        }
+
+        return request;
+    }
+
     @Synchronized
     public void abort(final int requestCode) {
         LOG.d("Aborting request %d");
@@ -135,26 +144,15 @@ public final class PermissionsHandler {
     }
 
     private void permissionsGranted(final Set<String> granted) {
+        LOG.d("%d permissions granted for request %d (%d permissions pending): %s", granted.size(), currentRequest.code, currentRequest.pendingSize(), granted);
         client.onPermissionsGranted(currentRequest.code, granted);
-        LOG.d("All permissions granted for request %d", currentRequest.code);
+        currentRequest.remove(granted);
     }
 
-    private void permissionsDeclined(final Set<String> permissions) {
-        client.onPermissionDeclined(currentRequest.code, permissions);
-        LOG.d("%d permissions declined for request %d: %s", permissions.size(),
-                currentRequest.code,
-                permissions);
-    }
-
-    @NonNull
-    private Set<String> getMissingPermissions(final String[] permissions) {
-        final Set<String> missing = new HashSet<>();
-
-        for (final String perm : permissions)
-            if (!checker.permissionGranted(perm))
-                missing.add(perm);
-
-        return missing;
+    private void permissionsDeclined(final Set<String> declined) {
+        LOG.d("%d permissions declined for request %d: %s", declined.size(), currentRequest.code, declined);
+        client.onPermissionDeclined(currentRequest.code, declined);
+        currentRequest.remove(declined);
     }
 
     @Synchronized
@@ -169,24 +167,20 @@ public final class PermissionsHandler {
             throw new IllegalStateException("grantResults size does not match that of permissions");
         }
 
-        final Set<String> denied = new HashSet<>();
-        final Set<String> granted = new HashSet<>();
-
         for (int i = 0; i < permissions.length; i++) {
             if (grantResults[i] == PackageManager.PERMISSION_GRANTED)
-                granted.add(permissions[i]);
+                currentRequest.granted(permissions[i]);
             else
-                denied.add(permissions[i]);
+                currentRequest.denied(permissions[i]);
         }
 
         try {
-            if (!granted.isEmpty()) {
-                permissionsGranted(granted);
+            if (currentRequest.hasGrants()) {
+                permissionsGranted(currentRequest.granted());
             }
 
-
-            if (!denied.isEmpty()) {
-                permissionsDeclined(denied);
+            if (currentRequest.hasDenies()) {
+                permissionsDeclined(currentRequest.denied());
             }
         } finally {
             currentRequest = null;
@@ -201,11 +195,11 @@ public final class PermissionsHandler {
             public void onClick(final DialogInterface dialog, final int which) {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        client.onPermissionRationaleDialogAccepted(currentRequest.code);
                         checker.requestPermission(currentRequest.code, permissions);
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:
-                        client.onPermissionRationaleDialogDeclined(currentRequest.code, permissions);
+                        LOG.d("Permission dialog declined for %s", permissions);
+                        permissionsDeclined(permissions);
                         currentRequest = null;
                         break;
                     default:
@@ -227,12 +221,5 @@ public final class PermissionsHandler {
 
         if (null == dialog.getButton(AlertDialog.BUTTON_NEGATIVE))
             throw new IllegalStateException("rationale dialog is missing the negative button");
-    }
-
-    @RequiredArgsConstructor
-    private static class PermissionRequest {
-        private final int code;
-        @NonNull
-        private final String[] permissions;
     }
 }

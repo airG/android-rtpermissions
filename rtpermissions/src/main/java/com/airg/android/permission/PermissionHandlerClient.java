@@ -54,22 +54,6 @@ public interface PermissionHandlerClient {
     void onPermissionRationaleDialogDimissed(final int requestCode);
 
     /**
-     * The user clicked the positive button on the rationale dialog
-     *
-     * @param requestCode original request code
-     */
-    void onPermissionRationaleDialogAccepted(final int requestCode);
-
-    /**
-     * The user clicked the negative button on the rationale dialog
-     *
-     * @param requestCode original request code
-     * @param permissions permissions for which the rationale dialog was being displayed
-     */
-    void onPermissionRationaleDialogDeclined(final int requestCode,
-                                             @NonNull Collection<String> permissions);
-
-    /**
      * Display a permission rationale dialog for the provided permissions. The generated
      * dialog should have exactly a negative and a positive button. No more, no less.
      *

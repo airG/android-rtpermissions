@@ -41,7 +41,7 @@ class ActivityPermissionsChecker implements PermissionsChecker {
         activity = a;
     }
 
-    public boolean permissionGranted(@NonNull final String permission) {
+    public boolean permissionIsGranted(@NonNull final String permission) {
         return ContextCompat.checkSelfPermission(activity, permission) == PERMISSION_GRANTED;
     }
 

@@ -26,7 +26,7 @@ import java.util.Set;
  * Checks for permissions
  */
 interface PermissionsChecker {
-    boolean permissionGranted(@NonNull final String permission);
+    boolean permissionIsGranted(@NonNull final String permission);
 
     Set<String> shouldShowRationaleDialog(@NonNull final Set<String> permissions);
 
