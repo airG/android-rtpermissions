@@ -70,7 +70,7 @@ dependencies {
     compile "com.android.support:support-annotations:$SUPPORT_LIB_VERSION"
     compile "com.android.support:support-v4:$SUPPORT_LIB_VERSION"
     compile "com.android.support:support-v13:$SUPPORT_LIB_VERSION"
-    compile 'com.airg.android:device:0.05.00@aar'
+    compile 'com.airg.android:device:0.06.02@aar'
     compile 'com.airg.android:logger:0.05.00@aar'
 }
 

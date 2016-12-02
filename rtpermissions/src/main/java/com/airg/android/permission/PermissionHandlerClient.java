@@ -36,7 +36,7 @@ public interface PermissionHandlerClient {
      *
      * @param requestCode original request code
      */
-    void onPermissionsGranted(final int requestCode);
+    void onPermissionsGranted(final int requestCode, final Set<String> granted);
 
     /**
      * At least one permission was not granted.

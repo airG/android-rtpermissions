@@ -29,6 +29,7 @@ import com.airg.android.device.ApiLevel;
 import com.airg.android.logging.Logger;
 import com.airg.android.logging.TaggedLogger;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -108,7 +109,9 @@ public final class PermissionsHandler {
         // all permissions  granted
         if (missing.size() == 0) {
             LOG.d("All permissions for request %d already granted", requestCode);
-            permissionGranted();
+            final Set<String> granted = new HashSet<>();
+            Collections.addAll(granted, permissions);
+            permissionsGranted(granted);
             return;
         }
 
@@ -130,13 +133,13 @@ public final class PermissionsHandler {
         currentRequest = null;
     }
 
-    private void permissionGranted() {
-        client.onPermissionsGranted(currentRequest.code);
+    private void permissionsGranted(final Set<String> granted) {
+        client.onPermissionsGranted(currentRequest.code, granted);
         LOG.d("All permissions granted for request %d", currentRequest.code);
         currentRequest = null;
     }
 
-    private void permissionDeclined(final Set<String> permissions) {
+    private void permissionsDeclined(final Set<String> permissions) {
         client.onPermissionDeclined(currentRequest.code, permissions);
         LOG.d("%d permissions declined for request %d: %s", permissions.size(),
                 currentRequest.code,
@@ -168,19 +171,22 @@ public final class PermissionsHandler {
         }
 
         final Set<String> denied = new HashSet<>();
+        final Set<String> granted = new HashSet<>();
 
         for (int i = 0; i < permissions.length; i++) {
-            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+            if (grantResults[i] == PackageManager.PERMISSION_GRANTED)
+                granted.add(permissions[i]);
+            else
                 denied.add(permissions[i]);
-            }
         }
 
-        if (denied.isEmpty()) {
-            permissionGranted();
-            return;
+        if (!granted.isEmpty()) {
+            permissionsGranted(granted);
         }
 
-        permissionDeclined(denied);
+        if (!denied.isEmpty()) {
+            permissionsDeclined(denied);
+        }
     }
 
     private void showPermissionRationaleDialog(final Set<String> permissions) {
