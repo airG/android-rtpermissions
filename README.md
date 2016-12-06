@@ -3,6 +3,8 @@
 #Android Runtime Permissions
 This library offers a way to handle the repetitive task of requesting runtime permissions. Check out the sample code for usage.
 
+`compile 'com.airg.android:rtpermissions:+@aar'`
+
 ##Contributions
 Contributions are appreciated and welcome. In order to contribute to this repo please follow these steps:
 
