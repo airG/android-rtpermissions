@@ -75,7 +75,7 @@ public class DangerousFragment
 
     private AlertDialog dialog;
 
-    private LocationManager gps;
+    private LocationManager locationManager;
     private Unbinder binder;
     private PermissionsHandler permissionHandler;
 
@@ -84,14 +84,14 @@ public class DangerousFragment
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_dangerous, container, false);
     }
 
     @Override
-    public void onViewCreated(final View view, final Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         binder = ButterKnife.bind(this, view);
         permissionHandler = com.airg.android.permission.PermissionsHandler.with(this, this);
@@ -115,11 +115,14 @@ public class DangerousFragment
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode) {
+    public void onPermissionsGranted(int requestCode, Set<String> granted) {
         if (REQUEST_PERMISSIONS != requestCode) return;
 
-        onCallLogPermissionGranted();
-        onLocationPermissionGranted();
+        if (granted.contains(READ_CALL_LOG))
+            onCallLogPermissionGranted();
+
+        if (granted.contains(ACCESS_FINE_LOCATION))
+            onLocationPermissionGranted();
     }
 
     @Override
@@ -136,23 +139,6 @@ public class DangerousFragment
     @Override
     public void onPermissionRationaleDialogDimissed(int requestCode) {
         dialog = null;
-    }
-
-    @Override
-    public void onPermissionRationaleDialogAccepted(int requestCode) {
-        // meh
-    }
-
-    @Override
-    public void onPermissionRationaleDialogDeclined(int requestCode,
-                                                    @NonNull Collection<String> permissions) {
-        if (permissions.contains(READ_CALL_LOG))
-            lastCallNumber.setText(R.string.denied);
-
-        if (permissions.contains(ACCESS_FINE_LOCATION)) {
-            longitude.setText(R.string.denied);
-            latitude.setText(R.string.denied);
-        }
     }
 
     @Override
@@ -187,9 +173,9 @@ public class DangerousFragment
             dialog = null;
         }
 
-        if (null != gps) {
+        if (null != locationManager) {
             //noinspection ResourceType
-            gps.removeUpdates(this);
+            locationManager.removeUpdates(this);
         }
 
         super.onPause();
@@ -201,13 +187,18 @@ public class DangerousFragment
         longitude.setText(R.string.loading);
 
         final Activity activity = getActivity();
-        gps = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
-        updateLocation(gps.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
-        gps.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
+        if (null == activity) return;
+
+        locationManager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
+
+        if (null == locationManager) return;
+
+        updateLocation(locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
     }
 
     private void onLocationPermissionDenied() {
-        gps = null;
+        locationManager = null;
         latitude.setText(R.string.denied);
         longitude.setText(R.string.denied);
     }
@@ -289,12 +280,14 @@ public class DangerousFragment
 
     static final class DialogBody {
         final View view;
-        @BindView (R.id.call_log_rationale) TextView callLogRationale;
-        @BindView (R.id.location_rationale) TextView locationRationale;
+        @BindView(R.id.call_log_rationale)
+        TextView callLogRationale;
+        @BindView(R.id.location_rationale)
+        TextView locationRationale;
 
-        DialogBody (final Context context) {
+        DialogBody(final Context context) {
             view = View.inflate(context, R.layout.dialog_combined_rationale, null);
-            ButterKnife.bind (this, view);
+            ButterKnife.bind(this, view);
         }
     }
 }

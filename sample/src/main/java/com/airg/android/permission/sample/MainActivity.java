@@ -23,7 +23,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.Settings;
@@ -33,7 +32,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -120,20 +118,9 @@ public class MainActivity
 
 
     private void gotoSettings() {
-        final Intent intent;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.fromParts("package", getPackageName(), null));
-        } else {
-            intent = new Intent(Intent.ACTION_VIEW);
-            intent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails");
-            intent.putExtra(Build.VERSION.SDK_INT == Build.VERSION_CODES.FROYO
-                            ? "pkg"
-                            : "com.android.settings.ApplicationPkgName"
-                    , getPackageName());
-        }
-
-        startActivityForResult(intent, REQUEST_SETTINGS);
+        startActivityForResult(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", getPackageName(), null)),
+                REQUEST_SETTINGS);
     }
 
     @Override
@@ -215,7 +202,7 @@ public class MainActivity
 
         @Override
         public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-            if (holder instanceof  ContactHolder){
+            if (holder instanceof ContactHolder) {
                 ((ContactHolder) holder).text.setText(names.get(position));
             }
         }
@@ -237,8 +224,7 @@ public class MainActivity
 
         final MenuItem record = menu.add(0, R.id.action_danger, 0, R.string.dangerous_action)
                 .setIcon(R.drawable.ic_action_lock);
-
-        MenuItemCompat.setShowAsAction(record, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
+        record.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         return true;
     }
@@ -267,14 +253,13 @@ public class MainActivity
 
     private class MainActivityPermissionsHandlerClient implements PermissionHandlerClient {
         @Override
-        public void onPermissionsGranted(int requestCode) {
+        public void onPermissionsGranted(int requestCode, Set<String> granted) {
             if (PERM_REQUEST_CONTACTS != requestCode)
                 return;
 
             Toast.makeText(MainActivity.this, R.string.permission_granted, Toast.LENGTH_SHORT).show();
             Log.d(LOGTAG, "Permission granted. Initializing loader.");
             getSupportLoaderManager().initLoader(CONTACTS_LOADER, null, MainActivity.this);
-
         }
 
         @Override
@@ -319,17 +304,6 @@ public class MainActivity
         }
 
         @Override
-        public void onPermissionRationaleDialogAccepted(int requestCode) {
-
-        }
-
-        @Override
-        public void onPermissionRationaleDialogDeclined(int requestCode,
-                                                        @NonNull Collection<String> permissions) {
-            Toast.makeText(MainActivity.this, R.string.no_soup, Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
         public AlertDialog showPermissionRationaleDialog(int requestCode,
                                                          @NonNull Collection<String> permissions,
                                                          @NonNull DialogInterface.OnClickListener listener) {
@@ -356,7 +330,7 @@ public class MainActivity
     }
 
     static class HeaderHolder extends RecyclerView.ViewHolder {
-        HeaderHolder (final View itemView) {
+        HeaderHolder(final View itemView) {
             super(itemView);
         }
     }

@@ -137,8 +137,16 @@ public final class PermissionsHandler {
         return request;
     }
 
+    /**
+     * Aborts the current request if one is in progress.
+     */
     @Synchronized
-    public void abort(final int requestCode) {
+    public void abort() {
+        if (null == currentRequest) {
+            LOG.d("Not aborting anything: No current request.");
+            return;
+        }
+
         LOG.d("Aborting request %d");
         currentRequest = null;
     }
