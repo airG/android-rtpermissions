@@ -30,6 +30,9 @@ import java.util.Set;
 
 final class LegacyPermissionChecker implements PermissionsChecker {
 
+    /**
+     * @return <code>true</code>. Always.
+     */
     @Override
     public boolean permissionIsGranted(@NonNull final String permission) {
         // before Marshmallow, permissions are granted at install time

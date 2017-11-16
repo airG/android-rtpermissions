@@ -60,43 +60,71 @@ public final class PermissionsHandler {
 
     private PermissionRequest currentRequest = null;
 
-    public static PermissionsHandler with(final Activity activity,
-                                          final PermissionHandlerClient client) {
+    /**
+     * For use within an {@link Activity}
+     *
+     * @param activity host Activity.
+     * @param client   A {@link PermissionHandlerClient} implementation
+     * @return An instance of {@link PermissionsHandler} to perform permission checks
+     */
+    public static PermissionsHandler with(@NonNull final Activity activity,
+                                          @NonNull final PermissionHandlerClient client) {
         if (activity == client)
             throw new IllegalArgumentException("Activities that implement PermissionHandlerClient can cause the " +
                     "chain of permission acquisition to break");
 
         final PermissionsChecker checker = ANDROID_M
-                                           ? new ActivityPermissionsChecker(activity)
-                                           : new LegacyPermissionChecker();
+                ? new ActivityPermissionsChecker(activity)
+                : new LegacyPermissionChecker();
 
         return new PermissionsHandler(checker, client);
     }
 
-    public static PermissionsHandler with(final Fragment fragment,
-                                          final PermissionHandlerClient client) {
+    /**
+     * For use within a native {@link Fragment}
+     *
+     * @param fragment the host Fragment
+     * @param client   A {@link PermissionHandlerClient} implementation
+     * @return An instance of {@link PermissionsHandler} to perform permission checks
+     */
+    public static PermissionsHandler with(@NonNull final Fragment fragment,
+                                          @NonNull final PermissionHandlerClient client) {
         final PermissionsChecker checker = ANDROID_M
-                                           ? new FragmentPermissionsChecker(fragment)
-                                           : new LegacyPermissionChecker();
+                ? new FragmentPermissionsChecker(fragment)
+                : new LegacyPermissionChecker();
 
         return new PermissionsHandler(checker, client);
     }
 
-    public static PermissionsHandler with(final android.support.v4.app.Fragment fragment,
-                                          final PermissionHandlerClient client) {
+    /**
+     * For use within a compat {@link android.support.v4.app.Fragment}
+     *
+     * @param fragment the host Fragment
+     * @param client   A {@link PermissionHandlerClient} implementation
+     * @return An instance of {@link PermissionsHandler} to perform permission checks
+     */
+    public static PermissionsHandler with(@NonNull final android.support.v4.app.Fragment fragment,
+                                          @NonNull final PermissionHandlerClient client) {
         final PermissionsChecker checker = ANDROID_M
-                                           ? new CompatFragmentPermissionsChecker(fragment)
-                                           : new LegacyPermissionChecker();
+                ? new CompatFragmentPermissionsChecker(fragment)
+                : new LegacyPermissionChecker();
 
         return new PermissionsHandler(checker, client);
     }
 
+    /**
+     * Start permission check.
+     *
+     * @param requestCode A request code for use when checking permissions. Your {@link Activity}
+     * @param permissions permissions to check (constants from {@link android.Manifest.permission}
+     * @throws IllegalStateException if the permissions list is empty or another request is currently in progress. It's a good idea to call {@link PermissionsHandler#abort()} from your <code>onPause()</code> method to abort any unfinished requests.
+     */
     @Synchronized
-    public void check(final int requestCode, final String... permissions) {
+    public void check(final int requestCode, @NonNull final String... permissions) {
         if (null != currentRequest)
             throw new IllegalStateException("Another request is already in progress");
 
-        if (permissions == null || permissions.length == 0)
+        if (permissions.length == 0)
             throw new IllegalArgumentException("No permissions");
 
         currentRequest = createRequest(requestCode, permissions);
@@ -138,7 +166,7 @@ public final class PermissionsHandler {
     }
 
     /**
-     * Aborts the current request if one is in progress.
+     * Aborts the current request if one is in progress. If there isn't a
      */
     @Synchronized
     public void abort() {
@@ -151,18 +179,24 @@ public final class PermissionsHandler {
         currentRequest = null;
     }
 
-    private void permissionsGranted(final Set<String> granted) {
+    private void permissionsGranted(@NonNull final Set<String> granted) {
         LOG.d("%d permissions granted for request %d (%d permissions pending): %s", granted.size(), currentRequest.code, currentRequest.pendingSize(), granted);
         client.onPermissionsGranted(currentRequest.code, granted);
         currentRequest.remove(granted);
     }
 
-    private void permissionsDeclined(final Set<String> declined) {
+    private void permissionsDeclined(@NonNull final Set<String> declined) {
         LOG.d("%d permissions declined for request %d: %s", declined.size(), currentRequest.code, declined);
         client.onPermissionDeclined(currentRequest.code, declined);
         currentRequest.remove(declined);
     }
 
+    /**
+     * Call from your {@link Activity#onRequestPermissionsResult(int, String[], int[])}, {@link Fragment#onRequestPermissionsResult(int, String[], int[])}, or your {@link android.support.v4.app.Fragment#onRequestPermissionsResult(int, String[], int[])}. It is safe to call this method even with request numbers that don't match what was provided to {@link PermissionsHandler#check(int, String...)} as they are simply ignored.
+     * @param requestCode premission check request code
+     * @param permissions list of permissions
+     * @param grantResults list of grant results
+     */
     @Synchronized
     public void onRequestPermissionsResult(final int requestCode,
                                            final String[] permissions,
@@ -195,7 +229,7 @@ public final class PermissionsHandler {
         }
     }
 
-    private void showPermissionRationaleDialog(final Set<String> permissions) {
+    private void showPermissionRationaleDialog(@NonNull final Set<String> permissions) {
         final int rc = currentRequest.code;
 
         final DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {

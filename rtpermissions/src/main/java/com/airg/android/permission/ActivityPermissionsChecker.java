@@ -41,6 +41,11 @@ class ActivityPermissionsChecker implements PermissionsChecker {
         activity = a;
     }
 
+    /**
+     * Determines if the specified permission has been granted
+     * @param permission permission to check
+     * @return <code>true</code> if the calling activity has been granted the specified permission and <code>false</code> otherwise.
+     */
     public boolean permissionIsGranted(@NonNull final String permission) {
         return ContextCompat.checkSelfPermission(activity, permission) == PERMISSION_GRANTED;
     }
